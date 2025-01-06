@@ -9,8 +9,21 @@ function App() {
         const socket = new WebSocket('ws://localhost:8080');
 
         socket.onmessage = (event) => {
-            const stockData = JSON.parse(event.data);
-            setStocks(stockData);
+            const message = JSON.parse(event.data);
+
+            if (message.type === 'initial') {
+                // Set initial stock data
+                setStocks(message.data);
+            } else if (message.type === 'update') {
+                // Update only the relevant stock
+                setStocks((prevStocks) =>
+                    prevStocks.map((stock) =>
+                        stock.symbol === message.data.symbol
+                            ? { ...stock, cours: message.data.cours }
+                            : stock
+                    )
+                );
+            }
         };
 
         socket.onclose = () => {
@@ -21,7 +34,6 @@ function App() {
             socket.close();
         };
     }, []);
-
     return (
         <div className="p-8">
             <h1 className="text-2xl font-bold text-center text-white bg-red-600 py-4 rounded-md">
